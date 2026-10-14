@@ -3,7 +3,7 @@ import math
 import matplotlib.pyplot as plt
 import solarsystem
 
-# --- Configuration ---
+# Configuration 
 TARGET_PLANETS = [
     'Mercury', 'Venus', 'Earth', 'Mars',
     'Jupiter', 'Saturn', 'Uranus', 'Neptune'
@@ -22,10 +22,10 @@ PLANET_COLORS = {
 
 TIME_STEP = datetime.timedelta(days=10)
 # Radius in AU: 3.0 frames the inner planets (Mercury-Mars); set to ~32.0 to fit Neptune
-VIEW_LIMIT = 22.0
+VIEW_LIMIT = 6.0
 LABEL_OFFSET = 0.08
 
-# --- Setup Figure & Static Elements ---
+# Setup Figure & Static Elements 
 plt.ion()
 fig, ax = plt.subplots(figsize=(10, 10))
 ax.set_facecolor('#0b0e14')
@@ -58,7 +58,7 @@ for planet in TARGET_PLANETS:
 title_artist = ax.set_title("", color='white', fontsize=12, pad=12)
 ax.legend(loc='lower left', facecolor='#161b22', edgecolor='none', labelcolor='white', fontsize=8)
 
-# --- Simulation Loop ---
+# Simulation Loop 
 sim_time = datetime.datetime.now(datetime.timezone.utc)
 
 try:
