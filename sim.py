@@ -14,6 +14,7 @@ G = 6.67430e-11
 AU_TO_M = 1.495978707e11         
 DAY_TO_S = 86400.0               
 OUTER_BOUNDARY_AU = 121.0         
+PROBE_MASS = 721.9 #kg
 
 # Masses of Celestial Objects (kg)
 MASSES = {
@@ -27,8 +28,6 @@ MASSES = {
     'Uranus':  8.6810e25,
     'Neptune': 1.02413e26
 }
-
-# 1/2 m v^2
 
 MU_SUN = G * MASSES['Sun']
 
@@ -109,6 +108,13 @@ def get_planet_positions_au(sim_time: datetime.datetime) -> dict:
         planet_pos_cache[key] = pos_2d
     return planet_pos_cache[key]
 
+
+def fuel_usage(v: float, m: float) -> float:
+    """
+    Calculate fuel usage in Joules.
+    """
+    # 1/2 m v^2
+    return 0.5 * m * (v**2)
 
 def select_adaptive_dt(probe_x_au: float, probe_y_au: float, heliocentric_dist_au: float, positions_au: dict, elapsed_days: float) -> datetime.timedelta:
     """
@@ -360,6 +366,7 @@ def run_trial(trial_id: int, launch_time: datetime.datetime, r2_target_au: float
                     # Final (x, y) coordinates where it finishes the trial
                     'final_x_au': round(probe_x_au, 5),
                     'final_y_au': round(probe_y_au, 5)
+                    'fuel_usage_gm': round(fuel_usage(v_inf, PROBE_MASS), 2)
                 })
             return rows
 
@@ -393,7 +400,8 @@ def main():
         'final_speed_m_s',
         'final_heliocentric_dist_au',
         'final_x_au',
-        'final_y_au'
+        'final_y_au',
+        'fuel_usage_gm'
     ]
 
     all_assist_records = []
