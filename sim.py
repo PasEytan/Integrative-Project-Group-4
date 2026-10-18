@@ -1,3 +1,9 @@
+# Fuel Equation
+# Camparison File 
+# Python portion of paper
+# * graphing file
+
+
 import csv
 import datetime
 import math
@@ -21,6 +27,8 @@ MASSES = {
     'Uranus':  8.6810e25,
     'Neptune': 1.02413e26
 }
+
+# 1/2 m v^2
 
 MU_SUN = G * MASSES['Sun']
 
