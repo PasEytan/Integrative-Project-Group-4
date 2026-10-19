@@ -1,7 +1,7 @@
 # Fuel Equation                 X
-# Camparison File               
-# Python portion of paper       
-# * graphing file
+# Camparison File               almost
+# Python portion of paper       almost
+# (later) graphing file
 
 
 import csv
@@ -50,18 +50,18 @@ ASSIST_RADIUS_AU = {
 
 # Safety Net Radius
 MIN_APPR_M = {
-    'Mercury': 2.44e6 * 1.05, 
-    'Venus':   6.05e6 * 1.05,
-    'Earth':   6.37e6 * 1.12,
-    'Mars':    3.39e6 * 1.12,
-    'Jupiter': 7.15e7 * 1.12,
-    'Saturn':  6.03e7 * 1.12,    
-    'Uranus':  2.56e7 * 1.12,
-    'Neptune': 2.48e7 * 1.12,
+    'Mercury': 2.44e6 * 1.001, 
+    'Venus':   6.05e6 * 1.001,
+    'Earth':   6.37e6 * 1.001,
+    'Mars':    3.39e6 * 1.001,
+    'Jupiter': 7.15e7 * 1.001,
+    'Saturn':  6.03e7 * 1.001,    
+    'Uranus':  2.56e7 * 1.001,
+    'Neptune': 2.48e7 * 1.001,
 }
 
 # Time step
-DT_CLOSE = datetime.timedelta(minutes=1)        # Approaching planet Danger zone
+DT_CLOSE = datetime.timedelta(minutes=0.5)        # Approaching planet Danger zone
 DT_FLYBY = datetime.timedelta(hours=1)          # 0.04 days when near a planet
 DT_INNER = datetime.timedelta(days=1)           # 1 day inside 3.5 AU
 DT_OUTER_PLANETS = datetime.timedelta(days=5)   # 5 days between 3.5 AU and 32.5 AU
@@ -71,11 +71,11 @@ DT_DEEP_SPACE = datetime.timedelta(days=20)     # 20 days beyond 32.5 AU (past N
 START_TIME = datetime.datetime.now(datetime.timezone.utc).replace(
     hour=0, minute=0, second=0, microsecond=0
 )
-LAUNCH_WINDOW_DAYS = 1200         # Search launch dates over the next x years
-LAUNCH_STEP_DAYS = 1              # Launch trial every 5 days
-TARGET_R2_VALUES_AU = [121.0]     # Trial R2 values for V_inf
+LAUNCH_WINDOW_DAYS = 20000         # Search launch dates over the next x years
+LAUNCH_STEP_DAYS = 14              # Launch trial every 5 days
+TARGET_R2_VALUES_AU = [10, 20, 30, 40, 50, 60]     # Trial R2 values for V_inf
 
-MAX_SIM_YEARS = 100               # Cutoff if probe never reaches 121 AU
+MAX_SIM_YEARS = 200               # Cutoff if probe never reaches 121 AU
 OUTPUT_CSV = "gravity_assists.csv"
 
 
@@ -423,6 +423,7 @@ def main():
                         f"{row['assist_planet']:<7} on {row['assist_time_utc']} | "
                         f"dV: {row['assist_speed_change_m_s']:+7.1f} m/s | "
                         f"121 AU Arrival: {row['arrival_time_utc']} ({row['total_flight_time_years']} yrs)"
+                        f"R2 Value Used: {r2_au}"
                     )
             trial_id += 1
 
