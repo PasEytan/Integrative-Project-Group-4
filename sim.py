@@ -1,6 +1,6 @@
-# Fuel Equation
-# Camparison File 
-# Python portion of paper
+# Fuel Equation                 X
+# Camparison File               
+# Python portion of paper       
 # * graphing file
 
 
@@ -72,8 +72,8 @@ START_TIME = datetime.datetime.now(datetime.timezone.utc).replace(
     hour=0, minute=0, second=0, microsecond=0
 )
 LAUNCH_WINDOW_DAYS = 1200         # Search launch dates over the next x years
-LAUNCH_STEP_DAYS = 1             # Launch trial every 5 days
-TARGET_R2_VALUES_AU = [121.0]  # Trial R2 values for V_inf
+LAUNCH_STEP_DAYS = 1              # Launch trial every 5 days
+TARGET_R2_VALUES_AU = [121.0]     # Trial R2 values for V_inf
 
 MAX_SIM_YEARS = 100               # Cutoff if probe never reaches 121 AU
 OUTPUT_CSV = "gravity_assists.csv"
@@ -365,7 +365,7 @@ def run_trial(trial_id: int, launch_time: datetime.datetime, r2_target_au: float
                     'final_heliocentric_dist_au': round(heliocentric_dist_au, 3),
                     # Final (x, y) coordinates where it finishes the trial
                     'final_x_au': round(probe_x_au, 5),
-                    'final_y_au': round(probe_y_au, 5)
+                    'final_y_au': round(probe_y_au, 5),
                     'fuel_usage_gm': round(fuel_usage(v_inf, PROBE_MASS), 2)
                 })
             return rows
