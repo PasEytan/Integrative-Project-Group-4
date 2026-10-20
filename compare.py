@@ -1,6 +1,7 @@
 import csv
 import datetime
 import math
+from collections import OrderedDict
 
 G = 6.67430e-11
 M_SUN = 1.98847e30
@@ -59,12 +60,10 @@ def simulate_sans_gam_time_days(init_x_au: float, init_y_au: float, final_x_au: 
         if r_au >= r_f_au:
             break
 
-       
         r_cubed = r_m ** 3
         ax = -MU_SUN * (x_m / r_cubed)
         ay = -MU_SUN * (y_m / r_cubed)
 
-        
         v_fx = vx + ax * dt_s
         v_fy = vy + ay * dt_s
 
@@ -90,104 +89,123 @@ with open(INPUT_CSV, mode='r', newline='', encoding='utf-8') as f:
     fieldnames = reader.fieldnames
     rows = list(reader)
 
-
 # Filter out any previously appended comparison rows
 valid_rows = [
     r for r in rows
     if not str(r['trial_id']).startswith('SANS_GAM')
 ]
 
-# Read coordinates from gravity assist 
-ref_row = valid_rows[0]
-init_x_au = float(ref_row['init_x_au'])
-init_y_au = float(ref_row['init_y_au'])
-final_x_au = float(ref_row['final_x_au'])
-final_y_au = float(ref_row['final_y_au'])
+# Group rows by trial_id so multi-assist trials stay together
+trials = OrderedDict()
+for r in valid_rows:
+    tid = r['trial_id']
+    if tid not in trials:
+        trials[tid] = []
+    trials[tid].append(r)
 
-r_i_au = math.hypot(init_x_au, init_y_au)
-r_f_au = math.hypot(final_x_au, final_y_au)
+trial_comparisons = []
 
-r_i_m = r_i_au * AU_TO_M
-r_f_m = r_f_au * AU_TO_M
+for tid, trial_rows in trials.items():
+    ref_row = trial_rows[0]
+    init_x_au = float(ref_row['init_x_au'])
+    init_y_au = float(ref_row['init_y_au'])
+    final_x_au = float(ref_row['final_x_au'])
+    final_y_au = float(ref_row['final_y_au'])
 
-# Velocity and Fuel 
-v_i = sans_gam_velocity(r_i_m, r_f_m)
-fuel_cost_j = calc_fuel_cost(v_i, PROBE_MASS)
+    r_i_au = math.hypot(init_x_au, init_y_au)
+    r_f_au = math.hypot(final_x_au, final_y_au)
 
-# Flight time without any gravity assist maneuvers
-flight_days, f_vx, f_vy, f_speed = simulate_sans_gam_time_days(
-    init_x_au, init_y_au, final_x_au, final_y_au, v_i
-)
-flight_years = flight_days / 365.25
+    r_i_m = r_i_au * AU_TO_M
+    r_f_m = r_f_au * AU_TO_M
 
-launch_dt = datetime.datetime.strptime(ref_row['launch_time_utc'], '%Y-%m-%d %H:%M:%S')
-arrival_dt = launch_dt + datetime.timedelta(days=flight_days)
+    # Velocity and Fuel without gam
+    v_i = sans_gam_velocity(r_i_m, r_f_m)
+    fuel_cost_j = calc_fuel_cost(v_i, PROBE_MASS)
 
-ux = init_x_au / r_i_au
-uy = init_y_au / r_i_au
+    # Flight time without any gravity assist maneuvers
+    flight_days, f_vx, f_vy, f_speed = simulate_sans_gam_time_days(
+        init_x_au, init_y_au, final_x_au, final_y_au, v_i
+    )
+    flight_years = flight_days / 365.25
 
-sans_gam_row = {
-    'cumulative_assist_counter': len(valid_rows) + 1,
-    'trial_id': 'SANS_GAM',
-    'total_gravity_assists': 0,
-    'assist_number_in_trial': 0,
-    'assist_planet': 'None',
-    'assist_time_utc': 'N/A',
-    'closest_approach_au': 0.0,
-    'assist_speed_change_m_s': 0.0,
-    'launch_time_utc': ref_row['launch_time_utc'],
-    'arrival_time_utc': arrival_dt.strftime('%Y-%m-%d %H:%M:%S'),
-    'total_flight_time_days': round(flight_days, 2),
-    'total_flight_time_years': round(flight_years, 3),
-    'target_r2_au': round(r_f_au, 3),
-    'v_inf_m_s': round(v_i, 2),
-    'init_x_au': init_x_au,
-    'init_y_au': init_y_au,
-    'init_vx_m_s': round(v_i * ux, 2),
-    'init_vy_m_s': round(v_i * uy, 2),
-    'init_speed_m_s': round(v_i, 2),
-    'final_vx_m_s': round(f_vx, 2),
-    'final_vy_m_s': round(f_vy, 2),
-    'final_speed_m_s': round(f_speed, 2),
-    'final_heliocentric_dist_au': round(r_f_au, 3),
-    'final_x_au': final_x_au,
-    'final_y_au': final_y_au,
-    'fuel_usage_gm': round(fuel_cost_j, 2)
-}
+    launch_dt = datetime.datetime.strptime(ref_row['launch_time_utc'], '%Y-%m-%d %H:%M:%S')
+    arrival_dt = launch_dt + datetime.timedelta(days=flight_days)
 
-valid_rows.append(sans_gam_row)
-calc_fuel_cost
-with open(OUTPUT_CSV, mode='w', newline='', encoding='utf-8') as f:
-    writer = csv.DictWriter(f, fieldnames=fieldnames)
-    writer.writeheader()
-    writer.writerows(valid_rows)
+    ux = init_x_au / r_i_au
+    uy = init_y_au / r_i_au
 
+    sans_gam_row = {
+        'cumulative_assist_counter': 0,
+        'trial_id': f'SANS_GAM_{tid}',
+        'total_gravity_assists': 0,
+        'assist_number_in_trial': 0,
+        'assist_planet': 'None',
+        'assist_time_utc': 'N/A',
+        'closest_approach_au': 0.0,
+        'assist_speed_change_m_s': 0.0,
+        'launch_time_utc': ref_row['launch_time_utc'],
+        'arrival_time_utc': arrival_dt.strftime('%Y-%m-%d %H:%M:%S'),
+        'total_flight_time_days': round(flight_days, 2),
+        'total_flight_time_years': round(flight_years, 3),
+        'target_r2_au': round(r_f_au, 3),
+        'v_inf_m_s': round(v_i, 2),
+        'init_x_au': init_x_au,
+        'init_y_au': init_y_au,
+        'init_vx_m_s': round(v_i * ux, 2),
+        'init_vy_m_s': round(v_i * uy, 2),
+        'init_speed_m_s': round(v_i, 2),
+        'final_vx_m_s': round(f_vx, 2),
+        'final_vy_m_s': round(f_vy, 2),
+        'final_speed_m_s': round(f_speed, 2),
+        'final_heliocentric_dist_au': round(r_f_au, 3),
+        'final_x_au': final_x_au,
+        'final_y_au': final_y_au,
+        'fuel_usage_gm': round(fuel_cost_j, 2)
+    }
 
-print(f"Start Coords : ({init_x_au}, {init_y_au}) AU -> r_i = {r_i_au:.5f} AU")
-print(f"Final Coords : ({final_x_au}, {final_y_au}) AU -> r_f = {r_f_au:.3f} AU")
-print(f"Initial v_i  : {v_i:,.2f} m/s")
-print(f"Energy Cost  : {fuel_cost_j:.3e} J ({fuel_cost_j:,.2f} J)")
-print(f"Travel Time  : {flight_days:,.2f} days ({flight_years:.3f} years)")
-print(f"\nSaved all rows + sans-GAM comparison row to '{OUTPUT_CSV}'.")
+    # How much slower in days and less fuel-efficient(joule) the snas gam run is
+    gam_time_days = float(ref_row['total_flight_time_days'])
+    gam_fuel_j = float(ref_row['fuel_usage_gm'])
 
-with open(OUTPUT_CSV, mode='r', newline='', encoding='utf-8') as f:
-    sort_reader = csv.DictReader(f)
-    sort_fieldnames = sort_reader.fieldnames
-    sort_rows = list(sort_reader)
+    time_penalty_days = flight_days - gam_time_days
+    fuel_penalty_j = fuel_cost_j - gam_fuel_j
 
-sans_gam_time = float(sans_gam_row['total_flight_time_days'])
-sans_gam_fuel = float(sans_gam_row['fuel_usage_gm'])
+    trial_comparisons.append({
+        'tid': tid,
+        'gam_rows': trial_rows,
+        'sans_row': sans_gam_row,
+        'time_penalty_days': time_penalty_days,
+        'fuel_penalty_j': fuel_penalty_j
+    })
 
-# Sort by largest difference vs SANS_GAM (flight time difference primary, fuel difference secondary)
-sort_rows.sort(
-    key=lambda r: (
-        abs(sans_gam_time - float(r['total_flight_time_days'])),
-        abs(sans_gam_fuel - float(r['fuel_usage_gm']))
-    ),
+# sort
+# rank trials where the non gam run is the slowest and least fuelcefficient compared to gam at the top
+trial_comparisons.sort(
+    key=lambda x: (x['time_penalty_days'], x['fuel_penalty_j']),
     reverse=True
 )
 
+# gam rows followed immediately by their sans gam row
+output_rows = []
+counter = 1
+for item in trial_comparisons:
+    for r in item['gam_rows']:
+        r['cumulative_assist_counter'] = counter
+        output_rows.append(r)
+        counter += 1
+    item['sans_row']['cumulative_assist_counter'] = counter
+    output_rows.append(item['sans_row'])
+    counter += 1
+
 with open(OUTPUT_CSV, mode='w', newline='', encoding='utf-8') as f:
-    sort_writer = csv.DictWriter(f, fieldnames=sort_fieldnames)
-    sort_writer.writeheader()
-    sort_writer.writerows(sort_rows)
+    writer = csv.DictWriter(f, fieldnames=fieldnames)
+    writer.writeheader()
+    writer.writerows(output_rows)
+
+print(f"Processed and ranked {len(trial_comparisons)} unique trials.")
+if trial_comparisons:
+    best = trial_comparisons[0]
+    print(f"Top Ranked Trial: Trial {best['tid']}")
+    print(f"SANS-GAM is slower by    : {best['time_penalty_days']:,.2f} days ({best['time_penalty_days']/365.25:.2f} years)")
+    print(f"SANS-GAM uses more fuel  : {best['fuel_penalty_j']:.3e} J")
+print(f"Saved interleaved and ranked comparisons to '{OUTPUT_CSV}'.")

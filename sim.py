@@ -1,5 +1,5 @@
 # Fuel Equation                 X
-# Camparison File               almost
+# Camparison File               x
 # Python portion of paper       almost
 # (later) graphing file
 
