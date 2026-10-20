@@ -170,3 +170,24 @@ print(f"Energy Cost  : {fuel_cost_j:.3e} J ({fuel_cost_j:,.2f} J)")
 print(f"Travel Time  : {flight_days:,.2f} days ({flight_years:.3f} years)")
 print(f"\nSaved all rows + sans-GAM comparison row to '{OUTPUT_CSV}'.")
 
+with open(OUTPUT_CSV, mode='r', newline='', encoding='utf-8') as f:
+    sort_reader = csv.DictReader(f)
+    sort_fieldnames = sort_reader.fieldnames
+    sort_rows = list(sort_reader)
+
+sans_gam_time = float(sans_gam_row['total_flight_time_days'])
+sans_gam_fuel = float(sans_gam_row['fuel_usage_gm'])
+
+# Sort by largest difference vs SANS_GAM (flight time difference primary, fuel difference secondary)
+sort_rows.sort(
+    key=lambda r: (
+        abs(sans_gam_time - float(r['total_flight_time_days'])),
+        abs(sans_gam_fuel - float(r['fuel_usage_gm']))
+    ),
+    reverse=True
+)
+
+with open(OUTPUT_CSV, mode='w', newline='', encoding='utf-8') as f:
+    sort_writer = csv.DictWriter(f, fieldnames=sort_fieldnames)
+    sort_writer.writeheader()
+    sort_writer.writerows(sort_rows)
